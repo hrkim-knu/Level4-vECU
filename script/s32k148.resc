@@ -5,13 +5,13 @@ mach create $name
 
 machine LoadPlatformDescription $ORIGIN/s32k148.repl
 
-sysbus LogAllPeripheralsAccess true
-cpu LogFunctionNames true
-logLevel "Noisy"
+#sysbus LogAllPeripheralsAccess true
+cpu LogFunctionNames "TASK" true
+#logLevel "Noisy"
 
 macro reset
 """
-    sysbus LoadELF $ORIGIN/../elf/S32K_HSP_2019_BASE_R190716_renode_2.elf
+    sysbus LoadELF $ORIGIN/../elf/S32K_HSP_2019_BASE_R190716_hrkim_renode.elf
     cpu VectorTableOffset `sysbus GetSymbolAddress "Os_ExceptionVectorTable"`
 #    cpu EnableProfilerCollapsedStack $ORIGIN/s32k148_AUTOSAR-profile true
 
@@ -19,6 +19,6 @@ macro reset
 
 runMacro $reset
 
-#machine StartGdbServer 3333
+machine StartGdbServer 3333
 
 machine Start

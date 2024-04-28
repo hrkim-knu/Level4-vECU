@@ -41,7 +41,7 @@ namespace Antmicro.Renode.Peripherals.Timers
             // latchedTimerValue = 0;
             // hrkim
             // UpdateCount(); 
-            this.Log(LogLevel.Info, $"Reset called");
+            // this.Log(LogLevel.Info, $"Reset called");
             UpdateInterrupt();
         }
 
@@ -56,8 +56,8 @@ namespace Antmicro.Renode.Peripherals.Timers
             var value = true;
             value &= overflowFlag.Value;
             value &= interruptEnable.Value;
-            this.Log(LogLevel.Info, $"UpdateInterrupt called - value: {value}, overflowFlag: {overflowFlag.Value}, interruptEnable: {interruptEnable.Value}");
-            this.Log(LogLevel.Info, $"updateInterruptCallCount : {updateInterruptCallCount}");
+            // this.Log(LogLevel.Info, $"UpdateInterrupt called - value: {value}, overflowFlag: {overflowFlag.Value}, interruptEnable: {interruptEnable.Value}");
+            // this.Log(LogLevel.Info, $"updateInterruptCallCount : {updateInterruptCallCount}");
             IRQ.Set(value);
         }
 
@@ -66,49 +66,49 @@ namespace Antmicro.Renode.Peripherals.Timers
             if(innerTimer.Compare != 0)
             {
                 overflowFlag.Value = true;
-                this.Log(LogLevel.Info, $"CompareReached called - overflowFlag: {overflowFlag.Value}, innerTimer.Value set to: {innerTimer.Value}");
+                // this.Log(LogLevel.Info, $"CompareReached called - overflowFlag: {overflowFlag.Value}, innerTimer.Value set to: {innerTimer.Value}");
                 // innerTimer.Value = initialCount;
                 UpdateInterrupt();
             }
-            else
-                this.Log(LogLevel.Info, $" Why CompareReached called? - overflowFlag: {overflowFlag.Value}, innerTimer.Value set to: {innerTimer.Value}");
+            // else
+                // this.Log(LogLevel.Info, $" Why CompareReached called? - overflowFlag: {overflowFlag.Value}, innerTimer.Value set to: {innerTimer.Value}");
         }
 
         private void UpdateDivider()
         {
             innerTimer.Divider = (uint)System.Math.Pow(2, prescaleValue);
             // innerTimer.Divider = 1;
-            this.Log(LogLevel.Info, $"UpdateDivder called - innerTimer.Divider: {innerTimer.Divider}");
+            // this.Log(LogLevel.Info, $"UpdateDivder called - innerTimer.Divider: {innerTimer.Divider}");
 
         }
         
         private uint LogAndReturnCNT()
         {
             uint value = (uint)innerTimer.Value;
-            this.Log(LogLevel.Info, $"CNT Read - innerTimer.Value: {value}");
+            // this.Log(LogLevel.Info, $"CNT Read - innerTimer.Value: {value}");
             return value;
         }
 
         private uint LogAndReturnMOD()
         {
             uint value = (uint)innerTimer.Compare;
-            this.Log(LogLevel.Info, $"MOD Read - innerTimer.Compare: {value}");
+            // this.Log(LogLevel.Info, $"MOD Read - innerTimer.Compare: {value}");
             return value;
         }
 
         private uint LogAndReturnCNTIN()
         {
             uint value = (uint)initialCount;
-            this.Log(LogLevel.Info, $"CNTIN Read - initialCount: {value}");
+            // this.Log(LogLevel.Info, $"CNTIN Read - initialCount: {value}");
             return value;
         }
 
         private bool LogAndReturnTOF()
         {
             bool value = overflowFlag.Value;
-            this.Log(LogLevel.Info, $"TOF Read - overflowFlag.Value: {value}");
-            this.Log(LogLevel.Info, $"CNT value in TOF Read - innerTimer.Value: {innerTimer.Value}");
-            this.Log(LogLevel.Info, $"MOD value in TOF Read - innerTimer.Compare: {innerTimer.Compare}");            
+            // this.Log(LogLevel.Info, $"TOF Read - overflowFlag.Value: {value}");
+            // this.Log(LogLevel.Info, $"CNT value in TOF Read - innerTimer.Value: {innerTimer.Value}");
+            // this.Log(LogLevel.Info, $"MOD value in TOF Read - innerTimer.Compare: {innerTimer.Compare}");            
             return value;
         }
 
@@ -139,7 +139,7 @@ namespace Antmicro.Renode.Peripherals.Timers
                     if (value == false)
                     {
                         overflowFlag.Value = false;
-                        this.Log(LogLevel.Info, $"TOF Write : {overflowFlag.Value}");
+                        // this.Log(LogLevel.Info, $"TOF Write : {overflowFlag.Value}");
                         UpdateInterrupt();
                         // IRQ.Unset();
                     }
@@ -157,7 +157,7 @@ namespace Antmicro.Renode.Peripherals.Timers
                 .WithValueField(0, 16, name: "CNT", writeCallback: (_, value) =>
                 {                   
                     innerTimer.Value = initialCount;
-                    this.Log(LogLevel.Info, $"CNT write - innerTimer.Value: {innerTimer.Value}");
+                    // this.Log(LogLevel.Info, $"CNT write - innerTimer.Value: {innerTimer.Value}");
                 // }, valueProviderCallback: _ => innerTimer.Value)
                 }, valueProviderCallback: _ => LogAndReturnCNT())
                 .WithReservedBits(16, 16)
@@ -170,11 +170,11 @@ namespace Antmicro.Renode.Peripherals.Timers
                 {
                     if(((uint)value > (uint)0xFFFF))
                     {
-                        this.Log(LogLevel.Warning, $"MOD is 16 bits register (write value : {value})");
+                        // this.Log(LogLevel.Warning, $"MOD is 16 bits register (write value : {value})");
                     //     return;
                     }
                     innerTimer.Compare = (uint)value;
-                    this.Log(LogLevel.Info, $"MOD write - innerTimer.Compare: {innerTimer.Compare}");
+                    // this.Log(LogLevel.Info, $"MOD write - innerTimer.Compare: {innerTimer.Compare}");
                 // }, valueProviderCallback: _ => innerTimer.Compare)
                 }, valueProviderCallback: _ => LogAndReturnMOD())
                 .WithReservedBits(16, 16)
@@ -186,7 +186,7 @@ namespace Antmicro.Renode.Peripherals.Timers
                 {
                     initialCount = (uint)value;
                     // innerTimer.Value = initialCount;
-                    this.Log(LogLevel.Info, $"CNTIN write - initialCount: {initialCount}");
+                    // this.Log(LogLevel.Info, $"CNTIN write - initialCount: {initialCount}");
                 // }, valueProviderCallback: _ => initialCount)
                 }, valueProviderCallback: _ => LogAndReturnCNTIN())
                 // .WithWriteCallback((_, __) => UpdateCount())
@@ -203,7 +203,7 @@ namespace Antmicro.Renode.Peripherals.Timers
                             innerTimer.Value = 0;
                             // compareFlag.Value = false;
                         }
-                        this.Log(LogLevel.Info, $"FTMEN write - innerTimer.Enabled: {innerTimer.Enabled}");
+                        // this.Log(LogLevel.Info, $"FTMEN write - innerTimer.Enabled: {innerTimer.Enabled}");
                     })
                 .WithTaggedFlag("INIT", 1)
                 // .WithFlag(1, FieldMode.Write, name: "INIT", writeCallback: (_, value) =>

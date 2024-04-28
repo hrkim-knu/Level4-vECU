@@ -22,7 +22,7 @@ sram_u: Memory.MappedMemory @ sysbus 0x20000000
 nvic: IRQControllers.NVIC @ sysbus 0xE000E000
     priorityMask: 0xF0
     //systickFrequency: 72000000
-    systickFrequency: 32000000
+    systickFrequency: 80000000
     IRQ -> cpu@0
 
 
@@ -32,7 +32,7 @@ cpu: CPU.CortexM @ sysbus
 
 
 dwt: Miscellaneous.DWT @ sysbus 0xE0001000
-    frequency: 32000000
+    frequency: 80000000
 
 
 lpspi0: SPI.IMXRT_LPSPI @ sysbus 0x4002C000
@@ -63,7 +63,7 @@ lpit: Timers.S32K_LPIT @ sysbus 0x40037000
     IRQ -> nvic@50
 
 ftm: Timers.S32K_FTM @ sysbus 0x40038000
-    frequency: 32000000
+    frequency: 80000000
     IRQ -> nvic@104
 
 //lptmr: Timers.S32K_LPTMR @ sysbus 0x40040000
