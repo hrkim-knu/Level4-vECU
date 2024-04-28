@@ -6,7 +6,7 @@ mach create $name
 machine LoadPlatformDescription $ORIGIN/s32k148.repl
 
 #sysbus LogAllPeripheralsAccess true
-cpu LogFunctionNames "TASK" true
+cpu LogFunctionNames true "TASK"
 #logLevel "Noisy"
 
 macro reset
