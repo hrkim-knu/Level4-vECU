@@ -26,6 +26,11 @@ namespace Antmicro.Renode.Time
             this.Owner = owner;
             this.LocalName = localName;
             this.Ratio = FrequencyToRatio(owner, Step * Frequency);
+
+            // hrkim
+            Logger.LogAs(owner, LogLevel.Info, $"Initializing ClockEntry - LocalName: {localName}, Enabled: {enabled}, Direction: {direction}, WorkMode: {workMode}, Step: {step}");
+            Logger.LogAs(owner, LogLevel.Info, $"Period: {period}, Frequency: {frequency}, Initial Value: {this.Value}, Ratio: {this.Ratio}");
+            Logger.LogAs(owner, LogLevel.Info, $"Owner: {owner}, Handler assigned: {handler != null}");
         }
 
         public ClockEntry With(ulong? period = null, long? frequency = null, Action handler = null, bool? enabled = null,
