@@ -62,7 +62,7 @@ namespace Antmicro.Renode.Time
 
         public static TimeInterval FromMicroseconds(ulong v)
         {
-            return FromTicks(v * TimeInterval.TicksPerMicrosecond);
+            return FromTicks((ulong)(v * TimeInterval.TicksPerMicrosecond));
         }
 
         public static TimeInterval FromMilliseconds(ulong v)
@@ -230,9 +230,19 @@ namespace Antmicro.Renode.Time
 
             checked
             {
-                var microSeconds = ticks / TicksPerMicrosecond;
-                ticksCountResiduum = ticks % TicksPerMicrosecond;
-                return microSeconds * performanceInMips;
+                // var microSeconds = ticks / TicksPerMicrosecond;
+                double microSeconds = ticks / TicksPerMicrosecond;
+                // hrkim : Calculate cycles
+                ulong cycles = (ulong)(Math.Round(microSeconds)) * performanceInMips;
+
+                // hrkim : Calcuate ticksCountResiduum (microsecond fraction --> the number of ticks)
+                double remainingMicroseconds = microSeconds - Math.Floor(microSeconds);
+                ticksCountResiduum = (ulong)(remainingMicroseconds * TicksPerMicrosecond);
+
+                return cycles;
+                
+                // ticksCountResiduum = ticks % TicksPerMicrosecond;
+                // return microSeconds * performanceInMips;
             }
         }
 
