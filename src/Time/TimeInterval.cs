@@ -240,14 +240,14 @@ namespace Antmicro.Renode.Time
                 ticksCountResiduum = (ulong)(remainingMicroseconds * TicksPerMicrosecond);
 
                 return cycles;
-                
+
                 // ticksCountResiduum = ticks % TicksPerMicrosecond;
                 // return microSeconds * performanceInMips;
             }
         }
 
         public ulong Ticks => ticks;
-        public ulong TotalMicroseconds => ticks / TicksPerMicrosecond;
+        public ulong TotalMicroseconds => (ulong)(ticks / TicksPerMicrosecond);
         public double TotalMilliseconds => ticks / (double)TicksPerMillisecond;
         public double TotalSeconds => ticks / (double)TicksPerSecond;
 
