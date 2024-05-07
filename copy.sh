@@ -9,3 +9,6 @@ cp -a ./src/Miscellaneous/. ${RENODE_HOME}/src/Infrastructure/src/Emulator/Perip
 
 # Copy Peripherals.csproj file
 #cp ./src/Peripherals.csproj ${RENODE_HOME}/src/Infrastructure/src/Emulator/Peripherals/
+
+# Copy all files from Time
+cp -a ./src/Time/. ${RENODE_HOME}/src/Infrastructure/src/Emulator/Main/Time/

@@ -1,4 +1,4 @@
-logFile $ORIGIN/../log/s32k148_AUTOSAR-renode.log True
+logFile $ORIGIN/../../log/s32k148_AUTOSAR-renode.log True
 using sysbus
 $name?="s32k148_AUTOSAR"
 mach create $name
@@ -6,7 +6,9 @@ mach create $name
 machine LoadPlatformDescription $ORIGIN/s32k148.repl
 
 #sysbus LogAllPeripheralsAccess true
-cpu LogFunctionNames true "TASK"
+#sysbus LogPeripheralAccess sysbus.ftm
+cpu LogFunctionNames true "TASK_OsTask_ASW_FG1"
+#cpu LogFunctionNames true 
 #logLevel "Noisy"
 
 macro reset

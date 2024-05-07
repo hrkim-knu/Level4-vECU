@@ -62,7 +62,7 @@ lpit: Timers.S32K_LPIT @ sysbus 0x40037000
     frequency: 32000000
     IRQ -> nvic@50
 
-ftm: Timers.S32K_FTM @ sysbus 0x40038000
+ftm: Timers.S32K148_FTM @ sysbus 0x40038000
     frequency: 80000000
     IRQ -> nvic@104
 
