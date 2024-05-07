@@ -42,10 +42,14 @@ namespace Antmicro.Renode.Time
             var microseconds = m.Groups["microseconds"].Success ? (ulong)(double.Parse($"0{m.Groups["microseconds"].Value}", CultureInfo.InvariantCulture) * 1000000) : 0;
 
             ulong ticks = 0;
-            ticks += microseconds * TicksPerMicrosecond;
-            ticks += seconds * TicksPerSecond;
-            ticks += minutes * (60 * TicksPerSecond);
-            ticks += hours * (3600 * TicksPerSecond);
+            ticks += (ulong)(microseconds * TicksPerMicrosecond);
+            ticks += (ulong)(seconds * TicksPerSecond);
+            ticks += (ulong)(minutes * (60 * TicksPerSecond));
+            ticks += (ulong)(hours * (3600 * TicksPerSecond));
+            // ticks += microseconds * TicksPerMicrosecond;
+            // ticks += seconds * TicksPerSecond;
+            // ticks += minutes * (60 * TicksPerSecond);
+            // ticks += hours * (3600 * TicksPerSecond);
 
             output = new TimeInterval(ticks);
             return true;
@@ -58,7 +62,7 @@ namespace Antmicro.Renode.Time
 
         public static TimeInterval FromMicroseconds(ulong v)
         {
-            return FromTicks(v * TimeInterval.TicksPerMicrosecond);
+            return FromTicks((ulong)(v * TimeInterval.TicksPerMicrosecond));
         }
 
         public static TimeInterval FromMilliseconds(ulong v)
@@ -104,16 +108,25 @@ namespace Antmicro.Renode.Time
         public static TimeInterval FromTimeSpan(TimeSpan span)
         {
             // since the number of ticks per second in `TimeSpan` is 10^7 (which gives 10 us per tick) we must divide here by 10 to get the number of `us`.
-            return new TimeInterval((ulong)span.Ticks / 10);
+            // hrkim : 100 nano sec / 0.8 micro sec
+            double microsecondTicks = 10 / TicksPerMicrosecond; // hrkim : 100 nano sec per ticks (0.8us)
+            ulong microsecCount = (ulong)Math.Floor(span.Ticks / microsecondTicks); // hrkim : Using Floor for safety
+            // return new TimeInterval((ulong)span.Ticks / 10);
+            return new TimeInterval(microsecCount);
         }
 
+        // hrkim : Calculate TimeInterval based on the number of CPU cycles and MIPS
         public static TimeInterval FromCPUCycles(ulong cycles, uint performanceInMips, out ulong cyclesResiduum)
         {
             checked
             {
                 cyclesResiduum = cycles % performanceInMips;
-                ulong useconds = cycles / performanceInMips;
-                return TimeInterval.FromTicks(useconds * TicksPerMicrosecond);
+                ulong useconds = cycles / performanceInMips; // hrkim : Whole Microseconds represented by the number of CPU cycles
+                // hrkim : Make ticks integer type using Round function
+                ulong ticks = (ulong)Math.Round(useconds * TicksPerMicrosecond);
+
+                return TimeInterval.FromTicks(ticks);
+                // return TimeInterval.FromTicks(useconds * TicksPerMicrosecond);
             }
         }
 
@@ -167,7 +180,9 @@ namespace Antmicro.Renode.Time
 
         public TimeSpan ToTimeSpan()
         {
-            return TimeSpan.FromTicks(checked((long)ticks * 10));
+            // hrkim : 1 TimeInterval Tick == 800 nano sec --> 800 nano sec / 100 nano sec
+            return TimeSpan.FromTicks(checked((long)ticks * 8));
+            // return TimeSpan.FromTicks(checked((long)ticks * 10));
         }
 
         public override bool Equals(object obj)
@@ -215,22 +230,33 @@ namespace Antmicro.Renode.Time
 
             checked
             {
-                var microSeconds = ticks / TicksPerMicrosecond;
-                ticksCountResiduum = ticks % TicksPerMicrosecond;
-                return microSeconds * performanceInMips;
+                // var microSeconds = ticks / TicksPerMicrosecond;
+                double microSeconds = ticks / TicksPerMicrosecond;
+                // hrkim : Calculate cycles
+                ulong cycles = (ulong)(Math.Round(microSeconds)) * performanceInMips;
+
+                // hrkim : Calcuate ticksCountResiduum (microsecond fraction --> the number of ticks)
+                double remainingMicroseconds = microSeconds - Math.Floor(microSeconds);
+                ticksCountResiduum = (ulong)(remainingMicroseconds * TicksPerMicrosecond);
+
+                return cycles;
+
+                // ticksCountResiduum = ticks % TicksPerMicrosecond;
+                // return microSeconds * performanceInMips;
             }
         }
 
         public ulong Ticks => ticks;
-        public ulong TotalMicroseconds => ticks / TicksPerMicrosecond;
+        public ulong TotalMicroseconds => (ulong)(ticks / TicksPerMicrosecond);
         public double TotalMilliseconds => ticks / (double)TicksPerMillisecond;
         public double TotalSeconds => ticks / (double)TicksPerSecond;
 
-        public const ulong TicksPerSecond = TicksPerMicrosecond * 1000000;
-        public const ulong TicksPerMillisecond = TicksPerMicrosecond * 1000;
+        public const ulong TicksPerSecond = (ulong)(TicksPerMicrosecond * 1000000);
+        public const ulong TicksPerMillisecond = (ulong)(TicksPerMicrosecond * 1000);
 
         // WARNING: when changing the resolution of TimeInterval update methods: 'FromCPUCycles', 'TryParse', 'FromTimeSpan' and 'ToTimeSpan' accordingly
-        public const ulong TicksPerMicrosecond = 4;
+        //public const ulong TicksPerMicrosecond = 1;
+        public const double TicksPerMicrosecond = 0.8;
 
         private TimeInterval(ulong ticks)
         {
