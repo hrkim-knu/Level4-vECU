@@ -61,13 +61,13 @@ portE: GPIOPort.NXPGPIOPort @ {
     -> portGPIO@4
 
 
-scg: Miscellaneous.S32K148_SCG @ sysbus 0x40064000
 
-ftfc: Miscellaneous.S32K148_FTFC @ sysbus 0x40020000
-
+//ftfc: Miscellaneous.S32K148_FTFC @ sysbus 0x40020000
 sim: Miscellaneous.S32K148_SIM @ sysbus 0x40048000
+//scg: Miscellaneous.S32K148_SCG @ sysbus 0x40064000
 
-pcc: Miscellaneous.S32K148_PCC @ sysbus 0x40065000
+
+//pcc: Miscellaneous.S32K148_PCC @ sysbus 0x40065000
 
 //rpc: Miscellaneous.S32K148_RPC @ sysbus 0x4007F000
 
