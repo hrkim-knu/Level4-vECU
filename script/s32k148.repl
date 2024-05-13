@@ -69,7 +69,7 @@ sim: Miscellaneous.S32K148_SIM @ sysbus 0x40048000
 
 pcc: Miscellaneous.S32K148_PCC @ sysbus 0x40065000
 
-rpc: Miscellaneous.S32K148_RPC @ sysbus 0x4007F000
+//rpc: Miscellaneous.S32K148_RPC @ sysbus 0x4007F000
 
 //sysbus:
     //init:
