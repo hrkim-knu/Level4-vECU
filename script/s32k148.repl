@@ -10,15 +10,58 @@ nvic: IRQControllers.NVIC @ sysbus 0xE000E000
 program: Memory.MappedMemory @ sysbus 0x0
     size: 0x200000
 
+flexnvm: Memory.MappedMemory @ sysbus 0x10000000 
+    size: 0x80000
+
+flexram: Memory.MappedMemory @ sysbus 0x14000000 
+    size: 0x1000 
+
 sram_l: Memory.MappedMemory @ sysbus 0x1C000000 
     size: 0x4000000
 
 sram_u: Memory.MappedMemory @ sysbus 0x20000000 
     size: 0x1F000
 
+dwt: Miscellaneous.DWT @ sysbus 0xE0001000
+    frequency: 80000000
+
+
+lpspi0: SPI.IMXRT_LPSPI @ sysbus 0x4002C000
+    -> nvic@26
+
+
+lpspi1: SPI.IMXRT_LPSPI @ sysbus 0x4002D000
+    -> nvic@27
+
+
+lpuart0: UART.Kinetis_LPUART @ sysbus 0x4006A000
+    IRQ -> nvic@31
+
+
+lpuart1: UART.Kinetis_LPUART @ sysbus 0x4006B000
+    IRQ -> nvic@33
+
+
+can0_mcr: Python.PythonPeripheral @ sysbus 0x40024000
+    size: 0x4
+    initable: true
+    filename: "scripts/pydev/flipflop.py"
+
+
+lpit: Timers.S32K_LPIT @ sysbus 0x40037000
+    //frequency: 8000000
+    frequency: 32000000
+    IRQ -> nvic@50
+
 ftm: Timers.S32K148_FTM @ sysbus 0x40038000
     frequency: 80000000
     IRQ -> nvic@104
+
+//lptmr: Timers.S32K_LPTMR @ sysbus 0x40040000
+    //-> nvic@8
+    //frequency: 80000000
+//    frequency: 48000000
+
 
 
 portGPIO: Miscellaneous.CombinedInput
@@ -60,12 +103,13 @@ portE: GPIOPort.NXPGPIOPort @ {
     numberOfPins: 17
     -> portGPIO@4
 
+//dmatcd : Miscellaneous.S32K148_DMATCD @ sysbus 0x40009000
 
+scg: Miscellaneous.S32K148_SCG @ sysbus 0x40064000
 
 //ftfc: Miscellaneous.S32K148_FTFC @ sysbus 0x40020000
-sim: Miscellaneous.S32K148_SIM @ sysbus 0x40048000
-//scg: Miscellaneous.S32K148_SCG @ sysbus 0x40064000
 
+//sim: Miscellaneous.S32K148_SIM @ sysbus 0x40048000
 
 //pcc: Miscellaneous.S32K148_PCC @ sysbus 0x40065000
 
