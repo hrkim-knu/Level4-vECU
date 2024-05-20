@@ -230,7 +230,7 @@ namespace Antmicro.Renode.Time
         public const ulong TicksPerMillisecond = TicksPerMicrosecond * 1000;
 
         // WARNING: when changing the resolution of TimeInterval update methods: 'FromCPUCycles', 'TryParse', 'FromTimeSpan' and 'ToTimeSpan' accordingly
-        public const ulong TicksPerMicrosecond = 4;
+        public const ulong TicksPerMicrosecond = 5;
 
         private TimeInterval(ulong ticks)
         {
