@@ -13,7 +13,8 @@ cpu LogFunctionNames true "TASK_OsTask_ASW_FG1"
 
 macro reset
 """
-    sysbus LoadELF $ORIGIN/../elf/S32K_HSP_2019_BASE_R190716_hrkim_renode.elf
+#    sysbus LoadELF $ORIGIN/../elf/S32K_HSP_2019_BASE_R190716_hrkim_renode.elf
+    sysbus LoadELF $ORIGIN/../elf/S32K_HSP_2019_BASE_R190716_hrkim.elf
     cpu VectorTableOffset `sysbus GetSymbolAddress "Os_ExceptionVectorTable"`
 #    cpu EnableProfilerCollapsedStack $ORIGIN/s32k148_AUTOSAR-profile true
 

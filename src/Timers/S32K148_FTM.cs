@@ -21,7 +21,7 @@ namespace Antmicro.Renode.Peripherals.Timers
             // divider : SC->PS에서 읽어와야할듯
             // compare : MOD에서 읽어와야할듯
             innerTimer = new ComparingTimer(machine.ClockSource, frequency, this, "ftm", limit: 0xFFFF, direction: Direction.Ascending,
-                enabled: false, eventEnabled: true, workMode: WorkMode.Periodic, compare: 0xFFFF, divider: 1, step: 5);
+                enabled: false, eventEnabled: true, workMode: WorkMode.Periodic, compare: 0xFFFF, divider: 1);
 
             innerTimer.CompareReached += CompareReached;
 
