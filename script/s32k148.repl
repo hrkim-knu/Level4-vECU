@@ -63,6 +63,8 @@ ftm: Timers.S32K148_FTM @ sysbus 0x40038000
 //    frequency: 48000000
 
 
+adc0: Analog.S32K148_ADC @ sysbus 0x4003B000
+
 
 portGPIO: Miscellaneous.CombinedInput
     numberOfInputs: 5
