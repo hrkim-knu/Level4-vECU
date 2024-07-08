@@ -40,9 +40,9 @@ namespace Antmicro.Renode.Peripherals.Analog
    // * Sampling time (time is fixed)
    // * Discontinuous mode
    // * Multi-ADC (i.e. Dual/Triple) mode
-   public class STM32_ADC : BasicDoubleWordPeripheral, IKnownSize
+   public class S32K148_ADC : BasicDoubleWordPeripheral, IKnownSize
    {
-      public STM32_ADC(IMachine machine) : base(machine)
+      public S32K148_ADC(IMachine machine) : base(machine)
       {
          // hrkim : 정수 생성, 정수 만큼 ADCChannel 객체 생성
          channels = Enumerable.Range(0, NumberOfChannels).Select(x => new ADCChannel(this, x)).ToArray();
@@ -104,13 +104,20 @@ namespace Antmicro.Renode.Peripherals.Analog
       private void DefineRegisters()
       {
             Registers.SC1A.Define(this)
-                    .WithValueField(0, 6, out selectedChannel, name: "ADCH",
-                        changeCallback: (_, value) => { if(value) { EnableADC(); }}) // hrkim : 1 is used
+                //     .WithValueField(0, 6, out selectedChannel, name: "ADCH") // hrkim : 1 is used
+                    .WithValueField(0, 6, out selectedChannel, name: "ADCH", writeCallback: (oldValue, newValue) =>
+                    {
+                        this.Log(LogLevel.Info, "Writing to ADCH. Old value: {0}, New value: {1}", oldValue, newValue);
+                        if(newValue != 0x3F)
+                        {
+                                EnableADC();
+                        }
+                    })
                     .WithTaggedFlag("Interrupt Enable", 6) // hrkim : not used
-                    .WithFlag(7, out coco, name: "COCO") // hkrim : 1 - Conversion is complete
+                    .WithFlag(7, out conversionComplete, FieldMode.Read, name: "COCO") // hkrim : 1 - Conversion is complete
                     .WithReservedBits(8, 24)
             ;
-            Register.CFG1.Define(this)
+            Registers.CFG1.Define(this)
                     .WithValueField(0, 2, name: "ADICLK") // hrkim : 0 
                     .WithValueField(2, 2, name: "MODE") // hrkim : 1 - 12-bit conversion
                     .WithReservedBits(4, 1)
@@ -119,142 +126,181 @@ namespace Antmicro.Renode.Peripherals.Analog
                     .WithValueField(8, 1, name: "CLRLTRG") // hrkim : 0
                     .WithReservedBits(9, 23)
             ;
-            Register.CFG2.Define(this)
-                    .WithValueField(0, 8, name: "SMPLTS", writeCallback: (_, value) => // hrkim :  1 -> ADC sampling time = 2 ADC clock cycle
-                    {
-                        samplingClock = value + 1;
-                    })
+            Registers.CFG2.Define(this)
+                    .WithValueField(0, 8, name: "SMPLTS")// hrkim :  1 -> ADC sampling time = 2 ADC clock cycle
                     .WithReservedBits(8, 24) 
             ;
-            Register.RA.Define(this)
-                    .WithValueField(0, 12, FieldMode.Read, name: "D", valueProviderCallback: _ => adcData)
+            Registers.RA.Define(this)
+                    .WithValueField(0, 12, FieldMode.Read, name: "D", valueProviderCallback: _ =>
+                    {
+                        this.Log(LogLevel.Info, "Reading ADC data {0}", adcData);
+                        return adcData;
+                        })
                     .WithReservedBits(12, 20)
             ;
-            Register.CV1.Define(this)
+            Registers.CV1.Define(this)
                     .WithValueField(0, 16, name: "CV") // hrkim : 0
                     .WithReservedBits(16, 16)
             ;
-            Register.CV2.Define(this)
+            Registers.CV2.Define(this)
                     .WithValueField(0, 16, name: "CV") // hrkim : 0
                     .WithReservedBits(16, 16)
             ;
-            Register.SC2.Define(this)
+            Registers.SC2.Define(this)
                     .WithValueField(0, 2, name: "REFSEL") // hrkim : 0 - Default Voltage Ref Selection
                     .WithFlag(2, name: "DMAEN") // hrkim : 0 - DMA is disabled
                     .WithFlag(3, name: "ACREN") // hrkim : 0
                     .WithFlag(4, name: "ACFGT") // hrkim : 0
                     .WithFlag(5, name: "ACFE") // hrkim : 0 - Compare func is disabled
-                    .WithFlag(6, out HwTrigger name: "ADTRG") // hrkim : 1 - HW trigger
+                    .WithFlag(6, out HwTrigger, name: "ADTRG", // hrkim : 1 - HW trigger
+                        writeCallback: (_, value) =>
+                        {
+                                this.Log(LogLevel.Info, "HwTrigger value written: {0:X}", value);
+                                if(value)
+                                {
+                                        // EnableADC();
+                                }
+                        })                    
                     .WithFlag(7, name: "ADACT") // hrkim : 0 - Conviersion not in progress
-                    .WithReservedBits(8, 5);
+                    .WithReservedBits(8, 5)
                     .WithValueField(13, 2, name: "TRGPRNUM") // hrkim : 0 - Not supported in ADC0
-                    .WithReservedBits(15, 1);
+                    .WithReservedBits(15, 1)
                     .WithValueField(16, 4, name: "TRGSTLAT") // hrkim : 0 - Not supported in ADC0
-                    .WithReservedBits(20, 4);
-                    .WithValueField(27, 4, name: "TRGSTERR") // hrkim : 0 - Not supported in ADC0
-                    .WithReservedBits(28, 4);
-            ;
-            Register.SC3.Define(this)
+                    .WithReservedBits(20, 4)
+                    .WithValueField(24, 4, name: "TRGSTERR") // hrkim : 0 - Not supported in ADC0
+                    .WithReservedBits(28, 4)
+            ;        
+            Registers.SC3.Define(this)
                     .WithValueField(0, 2, name: "AVGS") // hrkim : 0 - 4 samples avg but we insert converged value
                     .WithFlag(2, name: "AVGE") // hrkim : 0 - HW avg function disabled
                     .WithFlag(3, name: "ADCO") // hrkim : 0 - one shot
-                    .WithReservedBits(4, 3);
+                    .WithReservedBits(4, 3)
                     .WithFlag(7, name: "CAL") // hrkim : 0 - no calibration
                     .WithReservedBits(8, 24)
             ;
-            Register.BASE_OFS.Define(this)
+            Registers.BASE_OFS.Define(this)
                     .WithValueField(0, 8, name: "BA_OFS") // hrkim : 0x40
                     .WithReservedBits(8, 24)
             ;
-            Register.OFS.Define(this)
+            Registers.OFS.Define(this)
                     .WithValueField(0, 16, name: "OFS") // hrkim : 0xFFFF
-                    .WithReservedBits(17, 16)
+                    .WithReservedBits(16, 16)
             ;
-            Register.USR_OFS.Define(this)
+            Registers.USR_OFS.Define(this)
                     .WithValueField(0, 8, name: "USR_OFS") // hrkim : 0
                     .WithReservedBits(8, 24)
             ;
-            Register.XOFS.Define(this)
+            Registers.XOFS.Define(this)
                     .WithValueField(0, 6, name: "XOFS") // hrkim : 0x40
                     .WithReservedBits(6, 26)
             ;
-            Register.YOFS.Define(this)
+            Registers.YOFS.Define(this)
                     .WithValueField(0, 8, name: "YOFS") // hrkim : 0x37
                     .WithReservedBits(8, 24)
             ;
-            Register.G.Define(this)
-                    .WithValueField(0, 10, name: "G") // hrkim : 0x7FF
+            Registers.G.Define(this)
+                    .WithValueField(0, 11, name: "G") // hrkim : 0x7FF
                     .WithReservedBits(11, 21)
             ;
-            Register.UG.Define(this)
+            Registers.UG.Define(this)
                     .WithValueField(0, 10, name: "UG") // hrkim : 0x4
-                    .WithResvedBits(10, 22)
+                    .WithReservedBits(10, 22)
             ;
-            Register.CLPS.Define(this)
+            Registers.CLPS.Define(this)
                     .WithValueField(0, 7, name: "CLPS")
                     .WithReservedBits(7, 25)
             ;
-            Register.CLP3.Define(this)
+            Registers.CLP3.Define(this)
                     .WithValueField(0, 10, name: "CLP3")
                     .WithReservedBits(10, 22)
             ;
-            Register.CLP2.Define(this)
+            Registers.CLP2.Define(this)
                     .WithValueField(0, 10, name: "CLP2")
                     .WithReservedBits(10, 22)
             ;
-            Register.CLP1.Define(this)
+            Registers.CLP1.Define(this)
                     .WithValueField(0, 9, name: "CLP1")
                     .WithReservedBits(9, 23)
             ;
-            Register.CLP0.Define(this)
+            Registers.CLP0.Define(this)
                     .WithValueField(0, 8, name: "CLP0")
                     .WithReservedBits(8, 23)
             ;
-            Register.CLPX.Define(this)
+            Registers.CLPX.Define(this)
                     .WithValueField(0, 7, name: "CLPX")
                     .WithReservedBits(7, 25)
             ;
-            Register.CLP9.Define(this)
+            Registers.CLP9.Define(this)
                     .WithValueField(0, 7, name: "CLP9")
                     .WithReservedBits(7, 25)
             ;
-            Register.CLPS_OFS.Define(this)
+            Registers.CLPS_OFS.Define(this)
                     .WithValueField(0, 4, name: "CLPS_OFS")
                     .WithReservedBits(4, 28)
             ;
-            Register.CLP3_OFS.Define(this)
+            Registers.CLP3_OFS.Define(this)
                     .WithValueField(0, 4, name: "CLP3_OFS")
                     .WithReservedBits(4, 28)
             ;
-            Register.CLP2_OFS.Define(this)
+            Registers.CLP2_OFS.Define(this)
                     .WithValueField(0, 4, name: "CLP2_OFS")
                     .WithReservedBits(4, 28)
             ;
-            Register.CLP1_OFS.Define(this)
+            Registers.CLP1_OFS.Define(this)
                     .WithValueField(0, 4, name: "CLP1_OFS")
                     .WithReservedBits(4, 28)
             ;
-            Register.CLP0_OFS.Define(this)
+            Registers.CLP0_OFS.Define(this)
                     .WithValueField(0, 4, name: "CLP0_OFS")
                     .WithReservedBits(4, 28)
             ;
-            Register.CLPX_OFS.Define(this)
+            Registers.CLPX_OFS.Define(this)
                     .WithValueField(0, 12, name: "CLPX_OFS")
                     .WithReservedBits(12, 20)
             ;
-            Register.CLP9_OFS.Define(this)
+            Registers.CLP9_OFS.Define(this)
                     .WithValueField(0, 12, name: "CLP9_OFS")
                     .WithReservedBits(12, 20)
             ;
+        //     Registers.aSC1A.Define(this)
+        //             .WithValueField(0, 6, out selectedChannel, name: "ADCH", writeCallback: (oldValue, newValue) =>
+        //             {
+        //                 this.Log(LogLevel.Info, "Writing to ADCH. Old value: {0}, New value: {1}", oldValue, newValue);
+        //             })
+        //             .WithTaggedFlag("Interrupt Enable", 6) // hrkim : not used
+        //             .WithFlag(7, out conversionComplete, FieldMode.Read, name: "COCO") // hkrim : 1 - Conversion is complete
+        //             .WithReservedBits(8, 24)
+        //     ;
             Registers.aSC1A.Define(this)
-                    .WithValueField(0, 6, name: "ADCH") // hrkim : 4 -> 1
-                    .WithFlag(6, name: "AIEN") // hrkim : not used
-                    .WithFlag(7, nmae: "COCO") // hkrim : 1 - Conversion is complete
-                    .WithReservedBits(8, 24)
-            ;
-            Register.aRA.Define(this)
-                    .WithValueField(0, 12, name: "D")
-                    .WithReservedBits(12, 20)            
+                        .WithValueField(0, 6, out selectedChannel, name: "ADCH", writeCallback: (oldValue, newValue) =>
+                        {
+                                this.Log(LogLevel.Debug, "Writing to ADCH(aSC1A). Old value: {0}, New value: {1}", oldValue, newValue);
+                                if(newValue != 0x3F)
+                                {
+                                        EnableADC();
+                                }
+                        }, valueProviderCallback: _ =>
+                        {
+                                var value = selectedChannel.Value;
+                                this.Log(LogLevel.Debug, "Reading ADCH(aSC1A). Value: {0}", value);
+                                return value;
+                        })
+                        .WithTaggedFlag("Interrupt Enable", 6)
+                        .WithFlag(7, out conversionComplete, FieldMode.Read, name: "COCO", valueProviderCallback: _ =>
+                        {
+                                var value = conversionComplete.Value;
+                                this.Log(LogLevel.Debug, "Reading COCO(aSC1A). Value: {0}", value);
+                                return value;
+                        })
+                        .WithReservedBits(8, 24);
+        
+            Registers.aRA.Define(this)
+                    .WithValueField(0, 12, FieldMode.Read, name: "D", valueProviderCallback: _ =>
+                    {
+                        this.Log(LogLevel.Info, "Reading ADC data {0}", adcData);
+                        return adcData;
+                        })
+                    .WithReservedBits(12, 20)
             ;
          // Registers.Status.Define(this)
          //    .WithTaggedFlag("Analog watchdog flag", 0)
@@ -384,6 +430,8 @@ namespace Antmicro.Renode.Peripherals.Analog
       {
          //  currentChannel = channels[regularSequence[currentChannelIdx].Value];
           currentChannel = channels[selectedChannel.Value];
+          conversionComplete.Value = false;
+
           StartConversion();
       }
 
@@ -391,7 +439,8 @@ namespace Antmicro.Renode.Peripherals.Analog
       {
          if(HwTrigger.Value)
          {
-             this.Log(LogLevel.Debug, "Starting conversion time={0}",
+             //this.Log(LogLevel.Debug, "Starting conversion time={0}",
+             this.Log(LogLevel.Info, "Starting conversion time={0}",
                    machine.ElapsedVirtualTime.TimeElapsed);
 
              // Enable timer, which will simulate conversion being performed.
@@ -406,6 +455,8 @@ namespace Antmicro.Renode.Peripherals.Analog
       private void OnConversionFinished()
       {
          this.Log(LogLevel.Debug, "OnConversionFinished: time={0} channel={1}",
+        // hrkim
+        //   this.Log(LogLevel.Info, "OnConversionFinished: time={0} channel={1}",
                machine.ElapsedVirtualTime.TimeElapsed,
                selectedChannel.Value);
 
@@ -433,12 +484,15 @@ namespace Antmicro.Renode.Peripherals.Analog
          // Auto trigger next conversion if we're scanning or CONT bit set
          // samplingTimer.Enabled = scanModeActive || continuousConversion.Value;
 
+
          // Trigger EOC interrupt
          // if(endOfConversion.Value && eocInterruptEnable.Value)
          // {
          //    this.Log(LogLevel.Debug, "OnConversionFinished: Set IRQ");
          //    IRQ.Set(true);
          // }
+         conversionComplete.Value = true;
+        //  EnableADC();
       }
 
       // Control 1/2 fields
@@ -471,6 +525,7 @@ namespace Antmicro.Renode.Peripherals.Analog
       // hrkim
       private IValueRegisterField selectedChannel;
       private IFlagRegisterField HwTrigger; // 1 : HW trigger
+      private IFlagRegisterField conversionComplete;
       private uint adcData;
 
       public const int NumberOfChannels = 16;
@@ -507,7 +562,7 @@ namespace Antmicro.Renode.Peripherals.Analog
             SC3 = 0x94,
             BASE_OFS = 0x98,
             OFS = 0x9C,
-            USR_OFS = 0xA0
+            USR_OFS = 0xA0,
             XOFS = 0xA4,
             YOFS = 0xA8,
             G = 0xAC,
