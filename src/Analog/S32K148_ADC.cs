@@ -48,6 +48,9 @@ namespace Antmicro.Renode.Peripherals.Analog
          channels = Enumerable.Range(0, NumberOfChannels).Select(x => new ADCChannel(this, x)).ToArray();
 
          DefineRegisters();
+         
+         // hrkim : for renode-test
+         testAdcData = new uint[NumberOfChannels];
 
          // Sampling time fixed
          samplingTimer = new LimitTimer(
@@ -61,11 +64,28 @@ namespace Antmicro.Renode.Peripherals.Analog
          samplingTimer.LimitReached += OnConversionFinished;
       }
 
+      // hrkim : for renode-test
+      public void EnableTestMode()
+      {
+        testMode = true;
+      }
+
+      public void DisableTestMode()
+      {
+        testMode = false;
+      }
+
       public void FeedSample(uint value, uint channelIdx, int repeat = 1)
       {
+         
          if(IsValidChannel(channelIdx))
          {
             channels[channelIdx].FeedSample(value, repeat);
+         }
+
+         if(testMode)
+         {
+            testAdcData[channelIdx] = value;
          }
       }
 
@@ -76,6 +96,17 @@ namespace Antmicro.Renode.Peripherals.Analog
             var parsedSamples = ADCChannel.ParseSamplesFile(path);
             channels[channelIdx].FeedSample(parsedSamples, repeat);
          }
+      }
+
+      public uint ReadADC(uint channelIdx)
+      {
+        if(testMode)
+        {
+            return testAdcData[channelIdx];
+        }
+        else
+            return channels[channelIdx].GetSample();
+        // return adcData;
       }
 
       private bool IsValidChannel(uint channelIdx)
@@ -527,6 +558,8 @@ namespace Antmicro.Renode.Peripherals.Analog
       private IFlagRegisterField HwTrigger; // 1 : HW trigger
       private IFlagRegisterField conversionComplete;
       private uint adcData;
+      private bool testMode = false;
+      private uint[] testAdcData;
 
       public const int NumberOfChannels = 16;
 
