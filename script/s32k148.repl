@@ -104,10 +104,20 @@ portE: GPIOPort.NXPGPIOPort @ {
     sysbus new Bus.BusMultiRegistration { address: 0x4004D000; size: 0xD0; region: "port" }}
     numberOfPins: 17
     -> portGPIO@4
+    14 -> led0@0
+    13 -> led1@0
+    12 -> led2@0
+    11 -> led3@0
 
 //dmatcd : Miscellaneous.S32K148_DMATCD @ sysbus 0x40009000
 
 scg: Miscellaneous.S32K148_SCG @ sysbus 0x40064000
+
+led0: Miscellaneous.LED @ portE 14
+led1: Miscellaneous.LED @ portE 13
+led2: Miscellaneous.LED @ portE 12
+led3: Miscellaneous.LED @ portE 11
+
 
 //ftfc: Miscellaneous.S32K148_FTFC @ sysbus 0x40020000
 

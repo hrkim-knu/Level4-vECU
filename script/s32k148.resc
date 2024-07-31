@@ -6,20 +6,19 @@ mach create $name
 machine LoadPlatformDescription $ORIGIN/s32k148.repl
 
 #sysbus LogAllPeripheralsAccess true
-#sysbus LogPeripheralAccess sysbus.ftm
+#sysbus LogPeripheralAccess sysbus.adc0
 cpu LogFunctionNames true "ADC"
 #cpu LogFunctionNames true 
 
-#logLevel 3
+#logLevel 0 # debug
 #logLevel 1  sysbus.cpu
 #cpu LogFunctionNames true "TASK_OsTask_ASW_FG1_10ms"
  
 
 macro reset
 """
-    sysbus LoadELF $ORIGIN/../elf/S32K_HSP_2019_BASE_R190716_hrkim_ADC.elf
-#    sysbus LoadELF $ORIGIN/../elf/S32K_HSP_2019_BASE_R190716_hrkim_renode.elf
-#    sysbus LoadELF $ORIGIN/../elf/S32K_HSP_2019_BASE_R190716_hrkim.elf
+    #sysbus LoadELF $ORIGIN/../elf/S32K_HSP_2019_BASE_R190716_hrkim_ADC_LED.elf     # ADC
+    sysbus LoadELF $ORIGIN/../elf/S32K_HSP_2019_BASE_R190716_hrkim_renode.elf       # Test 1-5
     cpu VectorTableOffset `sysbus GetSymbolAddress "Os_ExceptionVectorTable"`
 #    cpu EnableProfilerCollapsedStack $ORIGIN/s32k148_AUTOSAR-profile true
 

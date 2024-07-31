@@ -56,30 +56,19 @@ namespace Antmicro.Renode.Peripherals.Timers
             value &= overflowFlag.Value;
             value &= interruptEnable.Value;
 	    
-	//    if(value == true)
-	  //  {
-	    //        updateInterruptCallCount++; // for debug
-//	    }
-        
-	    this.Log(LogLevel.Info, $"UpdateInterrupt called - value: {value}, overflowFlag: {overflowFlag.Value}, interruptEnable: {interruptEnable.Value}");
-//	    this.Log(LogLevel.Info, $"updateInterruptCallCount : {updateInterruptCallCount}");
+	        //this.Log(LogLevel.Info, $"UpdateInterrupt called - value: {value}, overflowFlag: {overflowFlag.Value}, interruptEnable: {interruptEnable.Value}");
+    	    //this.Log(LogLevel.Info, $"updateInterruptCallCount : {updateInterruptCallCount}");
             IRQ.Set(value);
         }
 
         private void CompareReached()
         {
-	   // if(innerTimer.Compare != 0)
-//	    {
    	  	    updateInterruptCallCount++; // for debug
-        	    overflowFlag.Value = true;
-	            this.Log(LogLevel.Info, $"CompareReached called - overflowFlag: {overflowFlag.Value}, innerTimer.Value set to: {innerTimer.Value}, innerTimer.Compare set to : {innerTimer.Compare}");
-		    this.Log(LogLevel.Info, $"Compare Reach Count : {updateInterruptCallCount}");
+        	overflowFlag.Value = true;
+	        //this.Log(LogLevel.Info, $"CompareReached called - overflowFlag: {overflowFlag.Value}, innerTimer.Value set to: {innerTimer.Value}, innerTimer.Compare set to : {innerTimer.Compare}");
+		    //this.Log(LogLevel.Info, $"Compare Reach Count : {updateInterruptCallCount}");
 	    
-	            UpdateInterrupt();
-//  	    }
-		//
-            // else
-                // this.Log(LogLevel.Info, $" Why CompareReached called? - overflowFlag: {overflowFlag.Value}, innerTimer.Value set to: {innerTimer.Value}");
+	         UpdateInterrupt();
         }
 
         private void UpdateDivider()

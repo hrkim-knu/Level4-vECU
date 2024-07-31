@@ -41,7 +41,8 @@ namespace Antmicro.Renode.Time
             var seconds = ulong.Parse(m.Groups["seconds"].Value);
             var microseconds = m.Groups["microseconds"].Success ? (ulong)(double.Parse($"0{m.Groups["microseconds"].Value}", CultureInfo.InvariantCulture) * 1000000) : 0;
 
-            ulong ticks = 0;
+            // ulong ticks = 0;
+            double ticks = 0;
             ticks += microseconds * TicksPerMicrosecond;
             ticks += seconds * TicksPerSecond;
             ticks += minutes * (60 * TicksPerSecond);
@@ -58,12 +59,14 @@ namespace Antmicro.Renode.Time
 
         public static TimeInterval FromMicroseconds(ulong v)
         {
-            return FromTicks(v * TimeInterval.TicksPerMicrosecond);
+            return FromTicks((double)(v * TimeInterval.TicksPerMicrosecond));
+            // return FromTicks((ulong)(v * TimeInterval.TicksPerMicrosecond));
+
         }
 
         public static TimeInterval FromMilliseconds(ulong v)
         {
-            return FromTicks(v * TimeInterval.TicksPerMillisecond);
+            return FromTicks((ulong)(v * TimeInterval.TicksPerMillisecond));
         }
 
         public static TimeInterval FromMilliseconds(float v)
@@ -100,12 +103,18 @@ namespace Antmicro.Renode.Time
         {
             return new TimeInterval(ticks);
         }
+        // hrkim
+        public static TimeInterval FromTicks(double ticks)
+        {
+            return new TimeInterval(ticks);
+        }        
 
         public static TimeInterval FromTimeSpan(TimeSpan span)
         {
             // since the number of ticks per second in `TimeSpan` is 10^7 (which gives 10 us per tick) we must divide here by 10 to get the number of `us`.
             // return new TimeInterval((ulong)span.Ticks / 10);
-            return new TimeInterval((ulong)span.Ticks / 10 * TicksPerMicrosecond);
+            // return new TimeInterval((ulong)(span.Ticks / 10.0 * 1.25));
+            return new TimeInterval(span.Ticks / 10.0 * 1.25);
         }
 
         public static TimeInterval FromCPUCycles(ulong cycles, uint performanceInMips, out ulong cyclesResiduum)
@@ -114,49 +123,91 @@ namespace Antmicro.Renode.Time
             {
                 cyclesResiduum = cycles % performanceInMips;
                 ulong useconds = cycles / performanceInMips;
+                // return TimeInterval.FromTicks((ulong)(useconds * TicksPerMicrosecond));
                 return TimeInterval.FromTicks(useconds * TicksPerMicrosecond);
+                
             }
         }
 
+        // public static TimeInterval operator +(TimeInterval t1, TimeInterval t2)
+        // {
+        //     return new TimeInterval(checked(t1.ticks + t2.ticks));
+        // }
+
+        // public static TimeInterval operator -(TimeInterval t1, TimeInterval t2)
+        // {
+        //     return new TimeInterval(checked(t1.ticks - t2.ticks));
+        // }
+
+        // public static bool operator <(TimeInterval t1, TimeInterval t2)
+        // {
+        //     return t1.ticks < t2.ticks;
+        // }
+
+        // public static bool operator >(TimeInterval t1, TimeInterval t2)
+        // {
+        //     return t1.ticks > t2.ticks;
+        // }
+
+        // public static bool operator <=(TimeInterval t1, TimeInterval t2)
+        // {
+        //     return t1.ticks <= t2.ticks;
+        // }
+
+        // public static bool operator >=(TimeInterval t1, TimeInterval t2)
+        // {
+        //     return t1.ticks >= t2.ticks;
+        // }
+
+        // public static bool operator ==(TimeInterval t1, TimeInterval t2)
+        // {
+        //     return t1.ticks == t2.ticks;
+        // }
+
+        // public static bool operator !=(TimeInterval t1, TimeInterval t2)
+        // {
+        //     return t1.ticks != t2.ticks;
+        // }
         public static TimeInterval operator +(TimeInterval t1, TimeInterval t2)
         {
-            return new TimeInterval(checked(t1.ticks + t2.ticks));
+            return new TimeInterval(checked(t1.doubleTicks + t2.doubleTicks));
         }
 
         public static TimeInterval operator -(TimeInterval t1, TimeInterval t2)
         {
-            return new TimeInterval(checked(t1.ticks - t2.ticks));
+            return new TimeInterval(checked(t1.doubleTicks - t2.doubleTicks));
         }
 
         public static bool operator <(TimeInterval t1, TimeInterval t2)
         {
-            return t1.ticks < t2.ticks;
+            return t1.doubleTicks < t2.doubleTicks;
         }
 
         public static bool operator >(TimeInterval t1, TimeInterval t2)
         {
-            return t1.ticks > t2.ticks;
+            return t1.doubleTicks > t2.doubleTicks;
         }
 
         public static bool operator <=(TimeInterval t1, TimeInterval t2)
         {
-            return t1.ticks <= t2.ticks;
+            return t1.doubleTicks <= t2.doubleTicks;
         }
 
         public static bool operator >=(TimeInterval t1, TimeInterval t2)
         {
-            return t1.ticks >= t2.ticks;
+            return t1.doubleTicks >= t2.doubleTicks;
         }
 
         public static bool operator ==(TimeInterval t1, TimeInterval t2)
         {
-            return t1.ticks == t2.ticks;
+            return t1.doubleTicks == t2.doubleTicks;
         }
 
         public static bool operator !=(TimeInterval t1, TimeInterval t2)
         {
-            return t1.ticks != t2.ticks;
+            return t1.doubleTicks != t2.doubleTicks;
         }
+
 
         public static readonly TimeInterval Empty = FromTicks(0);
         public static readonly TimeInterval Maximal = FromTicks(ulong.MaxValue);
@@ -169,7 +220,7 @@ namespace Antmicro.Renode.Time
         public TimeSpan ToTimeSpan()
         {
             // return TimeSpan.FromTicks(checked((long)ticks * 10));
-            return TimeSpan.FromTicks(checked((long)(ticks / TicksPerMicrosecond * 10)));
+            return TimeSpan.FromTicks(checked((long)(ticks * 10.0 / TicksPerMicrosecond)));
         }
 
         public override bool Equals(object obj)
@@ -189,7 +240,8 @@ namespace Antmicro.Renode.Time
 
         public override string ToString()
         {
-            var microseconds = (ticks / TicksPerMicrosecond) % 1000000;
+            // var microseconds = (ticks / TicksPerMicrosecond) % 1000000;
+            var microseconds = (ticks / (TicksPerMillisecond / 1000)) % 1000000;
             var seconds = (long)(ticks / TicksPerSecond);
             var hours = Math.DivRem(seconds, 3600, out seconds);
             var minutes = Math.DivRem(seconds, 60, out seconds);
@@ -217,35 +269,65 @@ namespace Antmicro.Renode.Time
 
             checked
             {
-                var microSeconds = ticks / TicksPerMicrosecond;
-                ticksCountResiduum = ticks % TicksPerMicrosecond;
+                // hrkim
+                var scaledTicks = ticks * 100;
+                var scaledTicksPerMicrosecond = (ulong)(TicksPerMicrosecond * 100);
+
+                // 변환된 값으로 나누기
+                var microSeconds = scaledTicks / scaledTicksPerMicrosecond;
+                // 나머지 연산을 수행한 후 다시 원래 단위로 복원
+                var scaledTicksResiduum = scaledTicks % scaledTicksPerMicrosecond;
+                ticksCountResiduum = scaledTicksResiduum / 100; // 나머지를 다시 원래 단위로 복원
+
                 return microSeconds * performanceInMips;
+                
+                // var microSeconds = ticks / TicksPerMicrosecond;
+                // ticksCountResiduum = ticks % TicksPerMicrosecond;
+                // return microSeconds * performanceInMips;
             }
         }
 
         public ulong Ticks => ticks;
-        public ulong TotalMicroseconds => ticks / TicksPerMicrosecond;
+        // public double Ticks => doubleTicks;
+
+        public double DoubleTicks => doubleTicks;
+        // public ulong TotalMicroseconds => ticks / TicksPerMicrosecond;
         // hrkim : TicksPerMicrosecond = 1.25
-        // public ulong TotalMicroseconds => (ulong)(ticks / 1.25);
+        // public ulong TotalMicroseconds => (ulong)(ticks / TicksPerMicrosecond);
+        public double TotalMicroseconds => (ticks / TicksPerMicrosecond);
         public double TotalMilliseconds => ticks / (double)TicksPerMillisecond;
         public double TotalSeconds => ticks / (double)TicksPerSecond;
 
-        public const ulong TicksPerSecond = TicksPerMicrosecond * 1000000;
         // hrkim : TicksPerMicrosecond = 1.25
-        // public const ulong TicksPerSecond = (ulong)(1.25 * 1000000);
-        public const ulong TicksPerMillisecond = TicksPerMicrosecond * 1000;
+        // public const ulong TicksPerSecond = TicksPerMicrosecond * 1000000;
+        // public const ulong TicksPerSecond = 1250000;
+        // public const ulong TicksPerSecond = 2500000;
+        public const ulong TicksPerSecond = 5000000;
         // hrkim : TicksPerMicrosecond = 1.25
-        // public const ulong TicksPerMillisecond = (ulong)(1.25 * 1000);
+        // public const ulong TicksPerMillisecond = TicksPerMicrosecond * 1000;
+        // public const ulong TicksPerMillisecond = 1250;
+        // public const ulong TicksPerMillisecond = 2500;
+        public const ulong TicksPerMillisecond = 5000;
 
         // WARNING: when changing the resolution of TimeInterval update methods: 'FromCPUCycles', 'TryParse', 'FromTimeSpan' and 'ToTimeSpan' accordingly
-        public const ulong TicksPerMicrosecond = 5;
     //   public const ulong TicksPerMicrosecond = 1;
+    //   public const double TicksPerMicrosecond = 1.25;
+    //   public const double TicksPerMicrosecond = 2.5;
+      public const double TicksPerMicrosecond = 5.0;
 
         private TimeInterval(ulong ticks)
         {
             this.ticks = ticks;
+            this.doubleTicks = (double)ticks;
+        }
+
+        private TimeInterval(double ticks)
+        {
+            this.ticks = (ulong)ticks;
+            this.doubleTicks = ticks;
         }
 
         private ulong ticks;
+        private double doubleTicks;
     }
 }
