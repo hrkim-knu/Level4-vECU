@@ -8,7 +8,8 @@ cp -a ./src/Timers/. ${RENODE_HOME}/src/Infrastructure/src/Emulator/Peripherals/
 cp -a ./src/Miscellaneous/. ${RENODE_HOME}/src/Infrastructure/src/Emulator/Peripherals/Peripherals/Miscellaneous/
 
 # Copy all files from Analog
-cp -a ./src/Miscellaneous/. ${RENODE_HOME}/src/Infrastructure/src/Emulator/Peripherals/Peripherals/Analog/
+cp -a ./src/Analog/. ${RENODE_HOME}/src/Infrastructure/src/Emulator/Peripherals/Peripherals/Analog/
 
 # Copy all files from Time
-cp -a ./src/Time/. ${RENODE_HOME}/src/Infrastructure/src/Emulator/Main/Time/
+#cp -a ./src/Time/. ${RENODE_HOME}/src/Infrastructure/src/Emulator/Main/Time/
+
