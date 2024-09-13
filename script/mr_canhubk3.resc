@@ -1,0 +1,30 @@
+logFile $ORIGIN/../../log/s32k3XX_CAN.log True
+using sysbus
+
+$name?="mr_canhubk3"
+$bin=@https://dl.antmicro.com/projects/renode/mr_canhubk3--zephyr-can-counter--no-loopback.elf-s_1959384-b17eb95f04cb75ef5a7781cdaad708db8a7f7449
+
+mach create $name
+machine LoadPlatformDescription $ORIGIN/mr_canhubk3.repl
+
+macro reset
+"""
+    sysbus LoadELF $bin false true sysbus.cpu0
+    sysbus.cpu0 VectorTableOffset `sysbus GetSymbolAddress "_vector_table" sysbus.cpu0`
+"""
+
+runMacro $reset
+
+logLevel -1
+
+# Create Internal CAN hub for routing frames
+emulation CreateCANHub "canhub"
+
+# Connect CAN controller to the CAN hub
+connector Connect can0 canhub
+
+# Create CAN bridge to host, by default it will be named 'van0'
+machine CreateSocketCANBridge "socketcan"
+
+# Connect bridge to the internal network
+connector Connect socketcan canhub

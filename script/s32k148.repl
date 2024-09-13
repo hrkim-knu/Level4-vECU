@@ -26,32 +26,36 @@ dwt: Miscellaneous.DWT @ sysbus 0xE0001000
     frequency: 80000000
 
 
-lpspi0: SPI.IMXRT_LPSPI @ sysbus 0x4002C000
-    -> nvic@26
+//lpspi0: SPI.IMXRT_LPSPI @ sysbus 0x4002C000
+    //-> nvic@26
 
 
-lpspi1: SPI.IMXRT_LPSPI @ sysbus 0x4002D000
-    -> nvic@27
+//lpspi1: SPI.IMXRT_LPSPI @ sysbus 0x4002D000
+    //-> nvic@27
 
 
-lpuart0: UART.Kinetis_LPUART @ sysbus 0x4006A000
-    IRQ -> nvic@31
+//lpuart0: UART.Kinetis_LPUART @ sysbus 0x4006A000
+    //IRQ -> nvic@31
 
 
-lpuart1: UART.Kinetis_LPUART @ sysbus 0x4006B000
-    IRQ -> nvic@33
+//lpuart1: UART.Kinetis_LPUART @ sysbus 0x4006B000
+    //IRQ -> nvic@33
 
 
-can0_mcr: Python.PythonPeripheral @ sysbus 0x40024000
-    size: 0x4
-    initable: true
-    filename: "scripts/pydev/flipflop.py"
+//can0_mcr: Python.PythonPeripheral @ sysbus 0x40024000
+    //size: 0x4
+    //initable: true
+    //filename: "scripts/pydev/flipflop.py"
 
+can0: CAN.S32K1XX_FlexCAN @ sysbus 0x40024000
+//can0: CAN.S32K3XX_FlexCAN @ sysbus 0x40024000
+    numberOfMessageBuffers: 32
+    IRQ -> nvic@81
 
-lpit: Timers.S32K_LPIT @ sysbus 0x40037000
+//lpit: Timers.S32K_LPIT @ sysbus 0x40037000
     //frequency: 8000000
-    frequency: 32000000
-    IRQ -> nvic@50
+//    frequency: 32000000
+    //IRQ -> nvic@50
 
 ftm: Timers.S32K148_FTM @ sysbus 0x40038000
     frequency: 80000000
