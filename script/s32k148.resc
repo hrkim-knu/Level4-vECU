@@ -18,7 +18,8 @@ cpu LogFunctionNames true "ADC"
 macro reset
 """
     #sysbus LoadELF $ORIGIN/../elf/S32K_HSP_2019_BASE_R190716_hrkim_ADC_LED.elf     # ADC
-    sysbus LoadELF $ORIGIN/../elf/S32K_HSP_2019_BASE_R190716_hrkim_renode.elf       # Test 1-5
+    sysbus LoadELF $ORIGIN/../elf/S32K_HSP_2019_BASE_R190716_hrkim_CAN.elf     # ADC
+    #sysbus LoadELF $ORIGIN/../elf/S32K_HSP_2019_BASE_R190716_hrkim_renode.elf       # Test 1-5
     cpu VectorTableOffset `sysbus GetSymbolAddress "Os_ExceptionVectorTable"`
 #    cpu EnableProfilerCollapsedStack $ORIGIN/s32k148_AUTOSAR-profile true
 
@@ -27,5 +28,17 @@ macro reset
 runMacro $reset
 
 machine StartGdbServer 3344
+
+# Create Internal CAN hub for routing frames
+emulation CreateCANHub "canhub"
+
+# Connect CAN controller to the CAN hub
+connector Connect can0 canhub
+
+# Create CAN bridge to host, by default it will be named 'van0'
+machine CreateSocketCANBridge "socketcan"
+
+# Connect bridge to the internal network
+connector Connect socketcan canhub
 
 machine Start
