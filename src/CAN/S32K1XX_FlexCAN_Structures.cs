@@ -174,8 +174,8 @@ namespace Antmicro.Renode.Peripherals.CAN
                 var data = buffer.ReadBytes((long)offset, (int)MetaSize);
             
                 ulong intValue = BitConverter.ToUInt64(data, 0);
-                Logger.Log(LogLevel.Debug, "hrkim debug : data in FetchMetadata (as UInt64): {0}", intValue);
                 var structure = Packet.Decode<MessageBufferStructure>(data);
+                //Logger.Log(LogLevel.Debug, "2. hrkim debug : data in FetchMetadata (structure): {0}", structure);
                 return structure;
             }
 

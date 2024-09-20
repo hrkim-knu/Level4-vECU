@@ -36,7 +36,8 @@ namespace Antmicro.Renode.Peripherals.CAN
             this.numberOfMessageBuffers = numberOfMessageBuffers;
             this.enhancedRxFifoSize = enhancedRxFifoSize;
 
-            IRQ = new GPIO();
+            IRQ0 = new GPIO();
+            IRQ1 = new GPIO();
 
             // messageBufferRange = new Range((ulong)Registers.MessageBuffer, numberOfMessageBuffers * 8);
             messageBufferRange = new Range((ulong)Registers.MessageBuffer, numberOfMessageBuffers * 16);
@@ -89,8 +90,9 @@ namespace Antmicro.Renode.Peripherals.CAN
                 // NOTE: Align offset to size of the message buffer
                 var mbRegion = GetMessageBufferRegionByOffset(mbOffset);
                 mbOffset -= mbOffset % GetMessageBufferSizeByRegion(mbRegion);
-                this.Log(LogLevel.Debug, "hrkim debug : WriteDoubleWord mboffset : {0}", mbOffset);
-                this.Log(LogLevel.Debug, "hrkim debug : WriteDoubleWord value : {0}", value);
+                this.Log(LogLevel.Debug, "1. hrkim debug : WriteDoubleWord mboffset : {0}", mbOffset);
+                this.Log(LogLevel.Debug, "1. hrkim debug : WriteDoubleWord value : {0}", value);
+                this.Log(LogLevel.Debug, "1. hrkim debug : TrytransmitFromMessageBuffer in WriteDoubleByte");
                 TryTransmitFromMessageBuffer(mbOffset);
                 return;
             }
@@ -125,7 +127,9 @@ namespace Antmicro.Renode.Peripherals.CAN
                 // NOTE: Align offset to size of the message buffer
                 var mbRegion = GetMessageBufferRegionByOffset(mbOffset);
                 mbOffset -= mbOffset % GetMessageBufferSizeByRegion(mbRegion);
-                this.Log(LogLevel.Debug, "hrkim debug : Write Byte");
+                this.Log(LogLevel.Debug, "1. hrkim debug : WriteByte mboffset : {0}", mbOffset);
+                this.Log(LogLevel.Debug, "1. hrkim debug : WriteByte value : {0}", value);
+                this.Log(LogLevel.Debug, "1. hrkim debug : TrytransmitFromMessageBuffer in WriteByte");
                 TryTransmitFromMessageBuffer(mbOffset);
                 return;
             }
@@ -134,7 +138,9 @@ namespace Antmicro.Renode.Peripherals.CAN
 
         public long Size => 0x1000;
         public event Action<CANMessageFrame> FrameSent;
-        public GPIO IRQ { get; }
+        public GPIO IRQ0 { get; }
+        // hrkim
+        public GPIO IRQ1 { get; }
 
         private void SoftReset()
         {
@@ -856,21 +862,22 @@ namespace Antmicro.Renode.Peripherals.CAN
         {
             if(Freeze || listenOnly.Value)
             {
-                this.Log(LogLevel.Debug, "hrkim debug : Freeze or ListenOnly mode");
+                this.Log(LogLevel.Debug, "2. hrkim debug : Freeze or ListenOnly mode in TTFMB");
                 return false;
             }
 
+            this.Log(LogLevel.Debug, "2. hrkim debug : Start FetchMetadata");
             var messageBuffer = MessageBufferStructure.FetchMetadata(messageBuffers, offset);
 
-            this.Log(LogLevel.Debug, "Loading {0} byte MB from 0x{1:X}", messageBuffer.Size, offset);
-            this.Log(LogLevel.Noisy, "Loading MB: {0}", messageBuffer);
+            this.Log(LogLevel.Debug, "2. Loading {0} byte MB from 0x{1:X}", messageBuffer.Size, offset);
+            this.Log(LogLevel.Noisy, "2. Loading MB: {0}", messageBuffer);
 
             if(!messageBuffer.ReadyForTransmission)
             {
-                this.Log(LogLevel.Debug, "hrkim debug : Not Ready, MessageBufferStructure.TxMessageCode : {0}\n", messageBuffer.TxMessageCode);
+                this.Log(LogLevel.Debug, "2. hrkim debug : Not Ready, MessageBufferStructure.TxMessageCode : {0}\n", messageBuffer.TxMessageCode);
                 return false;
             }
-
+            this.Log(LogLevel.Debug, "2. hrkim debug : Start FetchData");
             messageBuffer.FetchData(messageBuffers, offset);
 
             this.Log(LogLevel.Noisy, "Building frame from: {0}", messageBuffer);
@@ -881,15 +888,23 @@ namespace Antmicro.Renode.Peripherals.CAN
             SendFrame(frame);
 
             var index = GetMessageBufferIndexByOffset(offset);
+            this.Log(LogLevel.Debug, "2. hrkim debug : index-{0}", index);
+
             messageBufferInterrupt[index].Value = true;
+            this.Log(LogLevel.Debug, "2. hrkim debug : messageBufferInterrupt[{0}].Value = {1}", index, messageBufferInterrupt[index].Value);
+            UpdateInterrupts();
+
 
             return true;
         }
 
         private void RunArbitrationProcess()
         {
+            this.Log(LogLevel.Debug, "1. hrkim debug : RunArbitrationProcess()");
+            
             if(Freeze || listenOnly.Value)
             {
+                this.Log(LogLevel.Debug, "1. hrkim debug : Freeze or ListenOnly mode in RAP");
                 return;
             }
 
@@ -907,34 +922,47 @@ namespace Antmicro.Renode.Peripherals.CAN
 
             if(lowestBufferTransmittedFirst.Value)
             {
+                    // this.Log(LogLevel.Debug, "1. hrkim debug : RunArbitrationProcess1-messageBufferOffset {0}", messageBufferOffset);
                 // If Lowest Buffer Transmitted First is enabled, we can just iterate over offsets
                 foreach(var messageBufferOffset in MessageBufferOffsetsIterator.Skip(index).Take((int)lastMessageBufferIndex.Value - index))
                 {
-                    this.Log(LogLevel.Debug, "hrkim debug : RunArbitrationProcess1-messageBufferOffset {0}", messageBufferOffset);
                     TryTransmitFromMessageBuffer(messageBufferOffset);
                 }
                 return;
             }
 
+            this.Log(LogLevel.Debug, "1. hrkim debug : RunArbitrationProcess2");
             // Otherwise we have to actually read Message Buffer headers and sort them by priority
             foreach(var entry in MessageBuffersIterator.Skip(index)
                     .Take((int)lastMessageBufferIndex.Value - index)
                     .OrderBy(entry => -entry.MessageBuffer.Priority))
             {
-                this.Log(LogLevel.Debug, "hrkim debug : RunArbitrationProcess2");
+                this.Log(LogLevel.Debug, "1. hrkim debug : TryTransmitFromMessageBuffer in RunArbitrationProcess");
                 TryTransmitFromMessageBuffer(entry.Offset);
             }
         }
 
         private void UpdateInterrupts()
         {
-            var interrupt = Enumerable.Range(0, (int)numberOfMessageBuffers).Any(i => messageBufferInterrupt[i].Value && messageBufferInterruptEnable[i].Value);
-            if(interrupt != IRQ.IsSet)
+            // var interrupt0 = Enumerable.Range(0, (int)numberOfMessageBuffers).Any(i => messageBufferInterrupt[i].Value && messageBufferInterruptEnable[i].Value);
+            var interrupt0 = Enumerable.Range(0, (int)(numberOfMessageBuffers/2)).Any(i => messageBufferInterrupt[i].Value && messageBufferInterruptEnable[i].Value);
+            var interrupt1 = Enumerable.Range((int)(numberOfMessageBuffers/2), (int)(numberOfMessageBuffers/2)).Any(i => messageBufferInterrupt[i].Value && messageBufferInterruptEnable[i].Value);
+   
+            if(interrupt0 != IRQ0.IsSet)
             {
-                this.Log(LogLevel.Debug, "IRQ: {0}", interrupt);
+                this.Log(LogLevel.Debug, "IRQ0: {0}", interrupt0);
             }
-            this.Log(LogLevel.Debug, "IRQ: {0}, IRQ.IsSet : {1}", interrupt, IRQ.IsSet);
-            IRQ.Set(interrupt);
+
+            if(interrupt1 != IRQ1.IsSet)
+            {
+                this.Log(LogLevel.Debug, "IRQ1: {0}", interrupt1);
+            }
+
+            this.Log(LogLevel.Debug, "3. hrkim debug : IRQ0: {0}, IRQ0.IsSet : {1}", interrupt0, IRQ0.IsSet);
+            this.Log(LogLevel.Debug, "3. hrkim debug : IRQ1: {0}, IRQ1.IsSet : {1}\n", interrupt1, IRQ1.IsSet);
+
+            IRQ0.Set(interrupt0);
+            IRQ1.Set(interrupt1);
         }
 
         private uint Control2ResetValue => numberOfMessageBuffers > 64 ? 0x00600000U : 0x00800000U;

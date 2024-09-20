@@ -48,9 +48,9 @@ dwt: Miscellaneous.DWT @ sysbus 0xE0001000
     //filename: "scripts/pydev/flipflop.py"
 
 can0: CAN.S32K1XX_FlexCAN @ sysbus 0x40024000
-//can0: CAN.S32K3XX_FlexCAN @ sysbus 0x40024000
     numberOfMessageBuffers: 32
-    IRQ -> nvic@81
+    IRQ0 -> nvic@81
+    IRQ1 -> nvic@82
 
 //lpit: Timers.S32K_LPIT @ sysbus 0x40037000
     //frequency: 8000000
