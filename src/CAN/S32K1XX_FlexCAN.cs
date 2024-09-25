@@ -188,7 +188,12 @@ namespace Antmicro.Renode.Peripherals.CAN
                 .WithFlag(30, out freezeEnable, name: "Freeze Enable (MCR.FRZ)")
                 .WithFlag(31, out moduleDisable, name: "Module Disable (MCR.MDIS)",
                     changeCallback: (_, value) => lowPowerModeAcknowledge.Value |= value)
-                .WithChangeCallback((_, __) => RunArbitrationProcess())
+                // .WithChangeCallback((_, __) => RunArbitrationProcess())
+                .WithChangeCallback((oldValue, newValue) =>
+                {
+                    this.Log(LogLevel.Info, $"ModuleConfiguration changed from 0x{oldValue:X} to 0x{newValue:X}");
+                    RunArbitrationProcess();
+                })
             ;
 
             Registers.Control1.Define(this, softResettable: false)
@@ -209,6 +214,10 @@ namespace Antmicro.Renode.Peripherals.CAN
                 .WithTag("Phase Segment 1 (CTRL1.PSEG1)", 19, 3)
                 .WithTag("Resync Jump Width (CTRL1.RJW)", 22, 2)
                 .WithTag("Prescaler Division Factor (CTRL1.PRESDIV)", 24, 8)
+                .WithChangeCallback((oldValue, newValue) =>
+                {
+                    this.Log(LogLevel.Info, $"Control1 changed from 0x{oldValue:X} to 0x{newValue:X}");
+                })                
             ;
 
             Registers.FreeRunningTimer.Define(this)
@@ -870,7 +879,7 @@ namespace Antmicro.Renode.Peripherals.CAN
             var messageBuffer = MessageBufferStructure.FetchMetadata(messageBuffers, offset);
 
             this.Log(LogLevel.Debug, "2. Loading {0} byte MB from 0x{1:X}", messageBuffer.Size, offset);
-            this.Log(LogLevel.Noisy, "2. Loading MB: {0}", messageBuffer);
+            // this.Log(LogLevel.Noisy, "2. Loading MB: {0}", messageBuffer);
 
             if(!messageBuffer.ReadyForTransmission)
             {
@@ -891,7 +900,7 @@ namespace Antmicro.Renode.Peripherals.CAN
             this.Log(LogLevel.Debug, "2. hrkim debug : index-{0}", index);
 
             messageBufferInterrupt[index].Value = true;
-            this.Log(LogLevel.Debug, "2. hrkim debug : messageBufferInterrupt[{0}].Value = {1}", index, messageBufferInterrupt[index].Value);
+            // this.Log(LogLevel.Debug, "2. hrkim debug : messageBufferInterrupt[{0}].Value = {1}", index, messageBufferInterrupt[index].Value);
             UpdateInterrupts();
 
 
