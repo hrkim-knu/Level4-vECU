@@ -3,7 +3,7 @@
 CURRENT_DIR=$(cd ../../ && pwd)
 
 echo "export RENODE_HOME=$CURRENT_DIR" >> ~/.bashrc
-echo "export PATH=$PATH:$RENODE_HOME" >> ~/.bashrc
+echo 'export PATH=$PATH:$RENODE_HOME' >> ~/.bashrc
 
 source ~/.bashrc
 
