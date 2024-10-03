@@ -10,8 +10,11 @@ machine LoadPlatformDescription $ORIGIN/s32k148.repl
 #cpu LogFunctionNames true "ADC"
 #cpu LogFunctionNames true 
 
-logLevel -1 # noisy
+#logLevel -1 # noisy
 #logLevel 0 # debug
+#logLevel 2 # warning
+logLevel 3 # error
+
 #logLevel 1  sysbus.cpu
 #cpu LogFunctionNames true "TASK_OsTask_ASW_FG1_10ms"
 cpu LogFunctionNames true "Sim"
